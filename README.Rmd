@@ -29,3 +29,79 @@ The goal of the CommunityBuilding repository is to thoroughly document the gener
 4. Simple Nature type SDM
 5. Potential community generation
 6. Summary metrics
+
+# Preparations
+
+First we load all necessary packages
+
+```{r loadPakagesc}
+library(dplyr)
+library(ggplot2)
+library(terra)
+library(tidyterra)
+library(SDMWorkflows)
+library(BDRUtils)
+library(data.table)
+library(readxl)
+```
+
+# Taxonomic cleaning
+
+We first read the dataset from Arter.dk and clean the taxonomy according to GBIF nomenclature
+
+```{r ReadInTaxonomy, cache=TRUE}
+ToClean <- readxl::read_xlsx("2022-09-21.xlsx") |>
+  janitor::clean_names() |>
+  dplyr::filter(rige == "Plantae") |> 
+  dplyr::filter(taxonrang %in% c("Art", "Form", "Superart", "Underart", "Varietet")) |> 
+  dplyr::filter(herkomst != "Introduceret" | is.na(herkomst)) |> 
+  dplyr::select(videnskabeligt_navn, taxonrang) |> 
+  dplyr::distinct()
+```
+
+
+We start with `r prettyNum(nrow(ToClean), big.mark = ",")` taxa, we the use the SDMWorkflows package in order to clean the taxa
+
+```{r CleanTaxonomy, cache=TRUE, include=FALSE}
+Clean_Taxa <- SDMWorkflows::Clean_Taxa(ToClean$videnskabeligt_navn)
+```
+
+```{r CleanTaxonomyShow, cache=TRUE, eval=F}
+Clean_Taxa <- SDMWorkflows::Clean_Taxa(ToClean$videnskabeligt_navn)
+```
+
+After this we reduce our number to `r prettyNum(nrow(Clean_Taxa), big.mark = ",")` 
+
+## Working only with plants
+
+After this cleaning we will only work with plants, for that we filter for that:
+
+```{r SaveTaxa, include=FALSE, cache=TRUE}
+saveRDS(Clean_Taxa, "Clean_Taxa.rds")
+```
+
+
+```{r FilterPlants, cache=TRUE}
+Clean_Plants <- Clean_Taxa |>
+    dplyr::filter(kingdom == "Plantae") |>
+    dplyr::pull(species) |>
+    unique()
+```
+
+With this we finally end up with `r prettyNum(length(Clean_Plants), big.mark = ",")` species.
+
+# Presence extraction
+
+After this we extract all the presences we can retrieve from GBIF, only for Denmark, between 1999 and 2023
+
+```{r, cache=TRUE, eval=FALSE}
+
+
+SDMWorkflows::GetOccs(Species = unique(species),
+                        WriteFile = FALSE,
+                        Log = FALSE,
+                        country = "DK",
+                        limit = 100000,
+                        year='1999,2023')
+```
+
