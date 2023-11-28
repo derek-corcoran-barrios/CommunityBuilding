@@ -13,7 +13,10 @@ output:
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  warning = F,
+  message = F,
+  error = F
 )
 ```
 
@@ -95,13 +98,11 @@ With this we finally end up with `r prettyNum(length(Clean_Plants), big.mark = "
 After this we extract all the presences we can retrieve from GBIF, only for Denmark, between 1999 and 2023
 
 ```{r, cache=TRUE, eval=FALSE}
-
-
-SDMWorkflows::GetOccs(Species = unique(species),
-                        WriteFile = FALSE,
-                        Log = FALSE,
-                        country = "DK",
-                        limit = 100000,
-                        year='1999,2023')
+SDMWorkflows::GetOccs(Species = unique(Clean_Species$species), 
+                      WriteFile = TRUE, 
+                      Log = TRUE,
+                      country = "DK",
+                      limit = 100000,
+                      year='1999,2023')
 ```
 
